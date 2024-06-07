@@ -18,7 +18,7 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void createUsersTable() {
-        String creator = "CREATE TABLE users ("
+        String creator = "CREATE TABLE IF NOT EXISTS users ("
             + "id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, "
             + "name VARCHAR(20) NOT NULL, "
             + "lastName VARCHAR(20) NOT NULL, "
