@@ -3,6 +3,7 @@ package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
+import org.hibernate.boot.Metadata;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -17,34 +18,40 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void createUsersTable() {
-        String creator = "CREATE TABLE IF NOT EXISTS users "
-            + "(id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
-            + "name VARCHAR(20) NOT NULL,"
-            + "lastName VARCHAR(20) NOT NULL,"
-            + "age SMALLINT(20) NOT NULL";
+        String creator = "CREATE TABLE users ("
+            + "id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, "
+            + "name VARCHAR(20) NOT NULL, "
+            + "lastName VARCHAR(20) NOT NULL, "
+            + "age SMALLINT NOT NULL"
+            + ")";
+
         try (Statement stat = conn.createStatement()) {
             stat.executeUpdate(creator);
         } catch (SQLException e) {
-            for (Throwable t : e) {
-                t.printStackTrace();
-            }
+            e.printStackTrace();
         }
     }
 
     public void dropUsersTable() {
-        String drop = "DROP TABLE users";
-        try (Statement stat = conn.createStatement()) {
-            stat.executeUpdate(drop);
-        } catch (SQLException e) {
-            for (Throwable t : e) {
-                t.printStackTrace();
+        String tableName = "users";
+        String drop = "DROP TABLE " + tableName;
+        try {
+            DatabaseMetaData dbMetaD = conn.getMetaData();
+            ResultSet rs = dbMetaD.getTables(null, null, tableName, new String[] {"TABLE"});
+            if (rs.next()) {
+                try (Statement stat = conn.createStatement()) {
+                    stat.execute(drop);
+                }
             }
+        }
+         catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
     public void saveUser(String name, String lastName, byte age) {
         String sql = "INSERT INTO users "
-            + "(id, name, lastName, age) "
+            + "(name, lastName, age) "
             + "VALUES (?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
@@ -52,27 +59,24 @@ public class UserDaoJDBCImpl implements UserDao {
             ps.setByte(3, age);
             ps.executeUpdate();
         } catch (SQLException e) {
-            for (Throwable t : e) {
-                t.printStackTrace();
-            }
+            e.printStackTrace();
         }
     }
 
     public void removeUserById(long id) {
         String sql = "DELETE FROM users WHERE id = ?";
-        try (Statement stat = conn.createStatement()) {
-            stat.executeUpdate(sql);
+        try (PreparedStatement stat = conn.prepareStatement(sql)) {
+            stat.setLong(1, id);
+            stat.executeUpdate();
         } catch (SQLException e) {
-            for (Throwable t : e) {
-                t.printStackTrace();
-            }
+            e.printStackTrace();
         }
     }
 
     public List<User> getAllUsers() {
         String sql = "SELECT * FROM users";
         List<User> users = new ArrayList<>();
-        try(Statement stat = conn.createStatement()) {
+        try (Statement stat = conn.createStatement()) {
             ResultSet result = stat.executeQuery(sql);
             while (result.next()) {
                 User user = new User();
@@ -83,9 +87,7 @@ public class UserDaoJDBCImpl implements UserDao {
                 users.add(user);
             }
         } catch (SQLException e) {
-            for (Throwable t : e) {
-                t.printStackTrace();
-            }
+            e.printStackTrace();
         }
         return users;
     }
@@ -95,9 +97,7 @@ public class UserDaoJDBCImpl implements UserDao {
         try (Statement stat = conn.createStatement()) {
             stat.executeUpdate(sqlClean);
         } catch (SQLException e) {
-            for (Throwable t : e) {
-                t.printStackTrace();
-            }
+            e.printStackTrace();
         }
     }
 }
